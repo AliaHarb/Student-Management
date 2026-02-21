@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 using Student_Management.Models;
 using Student_Management.Repository;
@@ -18,7 +20,12 @@ namespace Student_Management
             builder.Services.AddSession(options => {
                 options.IdleTimeout = TimeSpan.FromMinutes(30);
             });
-
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(Option =>
+            {
+                Option.Password.RequiredLength = 4;
+                Option.Password.RequireNonAlphanumeric = false;
+            }
+            ).AddEntityFrameworkStores<ApplicationContext>();
             builder.Services.AddScoped<IStudentRepository, StudentRepository>();
             builder.Services.AddScoped<ICourseRepository, CourseRepository>(); 
 
@@ -37,7 +44,7 @@ namespace Student_Management
             app.UseStaticFiles();
             app.UseSession();
             app.UseRouting();
-
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllerRoute(

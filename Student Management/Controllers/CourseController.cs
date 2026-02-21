@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Student_Management.Models;
 using Student_Management.Repository;
 
@@ -11,7 +12,7 @@ namespace Student_Management.Controllers
         {
             _courseRepo = courseRepo;
         }
-
+        [Authorize]
         public IActionResult Index()
         {
             var courses = _courseRepo.GetAll();
