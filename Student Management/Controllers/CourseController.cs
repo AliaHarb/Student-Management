@@ -5,6 +5,7 @@ using Student_Management.Repository;
 
 namespace Student_Management.Controllers
 {
+    [Authorize] 
     public class CourseController : Controller
     {
         private readonly ICourseRepository _courseRepo;
@@ -12,14 +13,14 @@ namespace Student_Management.Controllers
         {
             _courseRepo = courseRepo;
         }
-        [Authorize]
+
+       
         public IActionResult Index()
         {
             var courses = _courseRepo.GetAll();
             return View(courses);
         }
 
-        // GET: /Course/Details/5
         public IActionResult Details(int id)
         {
             var course = _courseRepo.GetById(id);
@@ -27,27 +28,28 @@ namespace Student_Management.Controllers
             return View(course);
         }
 
-        // GET: /Course/Create
+        
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: /Course/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public IActionResult Create(Course course)
         {
             if (ModelState.IsValid)
             {
                 _courseRepo.Add(course);
-                _courseRepo.Save(); 
+                _courseRepo.Save();
                 return RedirectToAction(nameof(Index));
             }
             return View(course);
         }
 
-        // GET: /Course/Edit/5
+        [Authorize(Roles = "Admin")]
         public IActionResult Edit(int id)
         {
             var course = _courseRepo.GetById(id);
@@ -55,9 +57,9 @@ namespace Student_Management.Controllers
             return View(course);
         }
 
-        // POST: /Course/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public IActionResult Edit(Course course)
         {
             if (ModelState.IsValid)
@@ -69,17 +71,17 @@ namespace Student_Management.Controllers
             return View(course);
         }
 
-        // GET: /Course/Delete/5
+        [Authorize(Roles = "Admin")]
         public IActionResult Delete(int id)
-        { 
+        {
             var course = _courseRepo.GetById(id);
             if (course == null) return NotFound();
             return View(course);
         }
 
-        // POST: /Course/Delete
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public IActionResult DeleteConfirmed(int id)
         {
             _courseRepo.Delete(id);

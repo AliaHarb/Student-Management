@@ -4,32 +4,36 @@ using Microsoft.EntityFrameworkCore;
 using Student_Management.Models;
 using System.Text.Json;
 using Student_Management.Repository;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Student_Management.Controllers
 {
+    [Authorize] // يمنع دخول غير المسجلين تماماً
     public class StudentController : Controller
     {
-
         private readonly IStudentRepository _studentRepo;
-        private readonly ICourseRepository _courseRepo; 
+        private readonly ICourseRepository _courseRepo;
+
         public StudentController(IStudentRepository studentRepo, ICourseRepository courseRepo)
         {
             _studentRepo = studentRepo;
             _courseRepo = courseRepo;
         }
-        //Student/Index
+
+        // GET: Student/Index
         public IActionResult Index()
         {
             var st = _studentRepo.GetAll();
             List<Student> recentStudentsList = new List<Student>();
             string sessionData = HttpContext.Session.GetString("RecentIds");
+
             if (!string.IsNullOrEmpty(sessionData))
             {
                 var recentIds = JsonSerializer.Deserialize<List<int>>(sessionData);
                 foreach (var id in recentIds)
                 {
                     var stt = _studentRepo.GetById(id);
-                    if (st != null)
+                    if (stt != null) // تصحيح: التحقق من stt وليس st
                     {
                         recentStudentsList.Add(stt);
                     }
@@ -38,51 +42,58 @@ namespace Student_Management.Controllers
             ViewBag.RecentStudents = recentStudentsList;
             return View("Index", st);
         }
-        //Student/Details
-            public IActionResult Details(int id)
-            {
-                var student = _studentRepo.GetById(id);
-                if (student == null) return NotFound();
-                List<int> idsList = new List<int>();
 
-                string sessionData = HttpContext.Session.GetString("RecentIds");
+        // GET: Student/Details/5
+        public IActionResult Details(int id)
+        {
+            var student = _studentRepo.GetById(id);
+            if (student == null) return NotFound();
+
+            List<int> idsList = new List<int>();
+            string sessionData = HttpContext.Session.GetString("RecentIds");
+
             if (!string.IsNullOrEmpty(sessionData))
             {
                 idsList = JsonSerializer.Deserialize<List<int>>(sessionData);
             }
-                if (idsList.Contains(id))
-                {
-                    idsList.Remove(id);
-                }
-                idsList.Insert(0, id);
 
-                if (idsList.Count > 3)
-                {
-                    idsList = idsList.Take(3).ToList();
-                }
-                string newData = JsonSerializer.Serialize(idsList);
-                HttpContext.Session.SetString("RecentIds", newData);
+            if (idsList.Contains(id))
+            {
+                idsList.Remove(id);
+            }
+            idsList.Insert(0, id);
 
-
-
-                ViewBag.Msg = "Student Profile";
-                return View(student);
+            if (idsList.Count > 3)
+            {
+                idsList = idsList.Take(3).ToList();
             }
 
-        [HttpGet]
+            string newData = JsonSerializer.Serialize(idsList);
+            HttpContext.Session.SetString("RecentIds", newData);
+
+            ViewBag.Msg = "Student Profile";
+            return View(student);
+        }
+
+        // GET: Student/Create
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             ViewBag.Courses = new SelectList(_courseRepo.GetAll(), "CourseId", "CourseName");
             return View();
-
         }
-        // POST: Create 
+
+        // POST: Student/Create 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public IActionResult Create(Student student)
         {
             if (ModelState.IsValid)
             {
+                // Bonus: إضافة إيميل الشخص الذي قام بالإشاء
+                // student.CreatedBy = User.Identity.Name; 
+
                 _studentRepo.Add(student);
                 _studentRepo.Save();
                 return RedirectToAction(nameof(Index));
@@ -90,21 +101,25 @@ namespace Student_Management.Controllers
             ViewBag.Courses = new SelectList(_courseRepo.GetAll(), "CourseId", "CourseName");
             return View(student);
         }
-        // GET: Edit
+
+        // GET: Student/Edit/5
+        [Authorize(Roles = "Admin")] // تأمين الـ GET أيضاً
         public IActionResult Edit(int id)
         {
+            var student = _studentRepo.GetById(id);
+            if (student == null) return NotFound();
 
-            var student= _studentRepo.GetById(id);
             ViewBag.Courses = new SelectList(_courseRepo.GetAll(), "CourseId", "CourseName", student.CourseId);
             return View(student);
         }
 
-        // POST: Edit
+        // POST: Student/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public IActionResult Edit(int id, Student student)
         {
-            if (ModelState.IsValid) 
+            if (ModelState.IsValid)
             {
                 _studentRepo.Update(student);
                 _studentRepo.Save();
@@ -114,30 +129,28 @@ namespace Student_Management.Controllers
             return View(student);
         }
 
-        // GET: Delete
+        // GET: Student/Delete/5
+        [Authorize(Roles = "Admin")] // تأمين الـ GET أيضاً
         public IActionResult Delete(int id)
         {
             var student = _studentRepo.GetById(id);
-
             if (student == null) return NotFound();
-
             return View(student);
         }
 
-        // POST: Delete
+        // POST: Student/Delete/5
         [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken] // يفضل دائماً إضافتها مع الـ Post
+        [Authorize(Roles = "Admin")]
         public IActionResult DeleteConfirmed(int id)
         {
             var student = _studentRepo.GetById(id);
-            if (student != null) 
+            if (student != null)
             {
                 _studentRepo.Delete(id);
                 _studentRepo.Save();
             }
             return RedirectToAction(nameof(Index));
         }
-
-
-
     }
 }

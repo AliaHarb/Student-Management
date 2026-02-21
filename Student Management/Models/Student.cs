@@ -22,6 +22,7 @@ namespace Student_Management.Models
 
         [ForeignKey("CourseId")]
         public Course Course { get; set; }  // Navigation property
+        public string? CreatedBy { get; set; }
 
     }
 }

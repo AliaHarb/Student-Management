@@ -3,11 +3,12 @@ using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 using Student_Management.Models;
 using Student_Management.Repository;
+
 namespace Student_Management
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -50,7 +51,10 @@ namespace Student_Management
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
-
+            using (var scope = app.Services.CreateScope())
+            {
+                await RoleesSEeder.SeedRolesAsync(scope.ServiceProvider);
+            }
             app.Run();
         }
     }
