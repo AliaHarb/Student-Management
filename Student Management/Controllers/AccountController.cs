@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Student_Management.Models;
 using Student_Management.ViewModel;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Student_Management.Controllers
@@ -36,9 +37,12 @@ namespace Student_Management.Controllers
                IdentityResult result= await userManager.CreateAsync(appUser,userViewModel.Password);
                 if (result.Succeeded)
                 {
+                    //assign to role
+                   await userManager.AddToRoleAsync(appUser, "Admin"); //add  IdentityResult result to check
+
                     //cookie
                     //SignInManager<ApplicationUser> sing = SignInManager<ApplicationUser>();use inject rather than this
-                   await signInManager.SignInAsync(appUser, false); //return result also
+                    await signInManager.SignInAsync(appUser, false); //return result also
                     return RedirectToAction("Index", "Department");
 
                 }
@@ -71,7 +75,11 @@ namespace Student_Management.Controllers
              bool found= await userManager.CheckPasswordAsync(appUser, loginViewModel.Password);
                     if (found)
                     {//cookie
-                        await signInManager.SignInAsync(appUser,loginViewModel.RememberMe); //return result also
+                     //  await signInManager.SignInAsync(appUser,loginViewModel.RememberMe); //Just set id ,name
+                     //to set extra info
+                        List<Claim> claims = new List<Claim>();
+                        claims.Add(new Claim("UserEmail", appUser.Email));
+                        await signInManager.SignInWithClaimsAsync(appUser, loginViewModel.RememberMe, claims);
                         return RedirectToAction("Index", "Department");
                     }
                 }

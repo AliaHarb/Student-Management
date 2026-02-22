@@ -28,13 +28,13 @@
 
                     @*  Authentication *@
                     <ul class="navbar-nav">
-                        @if (User.Identity.IsAuthenticated)
+                        @if (User.Identity.IsAuthenticated==true)
                         {
                             <li class="nav-item">
                                 <span class="nav-link text-primary font-weight-bold">Welcome, @User.Identity.Name!</span>
                             </li>
                             <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="form-inline">
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="form-inline">Welcome @User.Identity.Name
                                     <button type="submit" class="nav-link btn btn-link text-dark" style="text-decoration:none">Logout</button>
                                 </form>
                             </li>
